@@ -1,3 +1,4 @@
+[![DOI](https://zenodo.org/badge/1183126576.svg)](https://doi.org/10.5281/zenodo.19049387)
 # AMRL Transport
 
 **Hardware abstraction layer and task queue for autonomous atom manipulation.**
