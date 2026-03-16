@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "amrl-transport"
+abstract: "Hardware abstraction layer and task queue for autonomous atom manipulation"
+authors:
+  - family-names: "Gordienko"
+    given-names: "Roman"
+version: 0.1.0
+doi: "10.5281/zenodo.19049387" 
+date-released: 2026-03-16
+license: MIT
+repository-code: "https://github.com/formeo/amrl-transport"
