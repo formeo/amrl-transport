@@ -1,0 +1,82 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "amrl-transport"
+version = "0.1.0"
+description = "Hardware abstraction and task queue for autonomous atom manipulation with STM/AFM. Drop-in LabVIEW replacement for DeepSPM."
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9"
+authors = [
+    { name = "Roman Gordienko", email = "formeo@users.noreply.github.com" },
+]
+keywords = [
+    "STM", "AFM", "scanning-probe-microscopy", "atom-manipulation",
+    "reinforcement-learning", "nanofabrication", "automation",
+    "DeepSPM", "Nanonis", "Createc", "laboratory-automation",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Scientific/Engineering :: Chemistry",
+    "Topic :: System :: Hardware :: Hardware Drivers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+    "numpy>=1.21",
+    "pydantic>=2.0",
+]
+
+[project.optional-dependencies]
+createc = ["pywin32"]
+queue = ["pika>=1.3", "redis>=4.0"]
+ml = [
+    "torch>=1.12",
+    "opencv-python>=4.5",
+    "scikit-image>=0.19",
+    "findiff>=0.9",
+]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "ruff>=0.1",
+    "mypy>=1.0",
+]
+all = ["amrl-transport[queue,ml,dev]"]
+
+[project.urls]
+Homepage = "https://github.com/formeo/amrl-transport"
+Repository = "https://github.com/formeo/amrl-transport"
+Issues = "https://github.com/formeo/amrl-transport/issues"
+Documentation = "https://github.com/formeo/amrl-transport#readme"
+
+[project.scripts]
+amrl-worker = "amrl_transport.cli:run_worker"
+amrl-submit = "amrl_transport.cli:submit_task"
+amrl-deepspm-server = "amrl_transport.deepspm.__main__:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"
+
+[tool.ruff]
+line-length = 99
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true

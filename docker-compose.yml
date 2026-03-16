@@ -1,0 +1,55 @@
+version: "3.9"
+
+# Local development stack for AMRL task queue.
+# Usage: docker compose up -d
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "5672:5672"     # AMQP
+      - "15672:15672"   # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: amrl
+      RABBITMQ_DEFAULT_PASS: amrl
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Example worker using the simulator (no real STM needed)
+  worker-sim:
+    build: .
+    command: >
+      python -m amrl_transport.cli worker
+        --transport simulator
+        --broker amqp://amrl:amrl@rabbitmq:5672/
+        --redis redis://redis:6379/0
+        --worker-id sim-worker-01
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    profiles:
+      - worker
+
+volumes:
+  rabbitmq_data:
+  redis_data:
