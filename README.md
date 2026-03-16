@@ -1,4 +1,6 @@
-[![DOI](https://zenodo.org/badge/1183126576.svg)](https://doi.org/10.5281/zenodo.19049387)
+[![PyPI](https://img.shields.io/pypi/v/amrl-transport.svg)](https://pypi.org/project/amrl-transport/)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19049387.svg)](https://doi.org/10.5281/zenodo.19049387)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 # AMRL Transport
 
 **Hardware abstraction layer and task queue for autonomous atom manipulation.**
