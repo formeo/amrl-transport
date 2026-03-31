@@ -16,7 +16,6 @@ import select
 import socket
 import struct
 import time
-from typing import Optional
 
 import numpy as np
 
@@ -51,7 +50,7 @@ class DeepSPMClient:
         self.host = host
         self.port = port
         self.timeout = timeout
-        self._sock: Optional[socket.socket] = None
+        self._sock: socket.socket | None = None
 
     def connect(self) -> None:
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -161,7 +160,7 @@ class EnvClientCompat:
         try:
             self._c.tipshaping(px, py, action)
             self.terminateOnFail = False
-        except Exception as e:
+        except Exception:
             if self.terminateOnFail:
                 self.agent.terminate()
             self.terminateOnFail = True
@@ -196,5 +195,8 @@ class EnvClientCompat:
     def logResponse(self, response: str):
         import datetime
         self.terminateOnFail = False
-        self.logFile.write(f"{datetime.datetime.now()}\t{time.time()}\t << {response}\t{time.time()-self.requestSendTime}\n")
+        elapsed = time.time() - self.requestSendTime
+        self.logFile.write(
+            f"{datetime.datetime.now()}\t{time.time()}\t << {response}\t{elapsed}\n"
+        )
         self.logFile.flush()

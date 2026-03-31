@@ -18,7 +18,6 @@ from __future__ import annotations
 import logging
 import socket
 import struct
-from typing import Optional
 
 import numpy as np
 
@@ -50,7 +49,7 @@ class NanonisTransport(STMTransport):
     def __init__(self, host: str = "localhost", port: int = 6501) -> None:
         self._host = host
         self._port = port
-        self._sock: Optional[socket.socket] = None
+        self._sock: socket.socket | None = None
 
     def connect(self) -> None:
         logger.info("Connecting to Nanonis at %s:%d", self._host, self._port)
@@ -88,7 +87,7 @@ class NanonisTransport(STMTransport):
 
         # Read response header
         resp_header = self._recv_exact(36)
-        resp_cmd = resp_header[:32].rstrip(b"\x00").decode("ascii")
+        resp_header[:32].rstrip(b"\x00").decode("ascii")
         resp_size = struct.unpack(">I", resp_header[32:36])[0]
 
         # Read response body
@@ -113,7 +112,7 @@ class NanonisTransport(STMTransport):
         offset_nm: np.ndarray,
         pixel: int,
         bias_mv: float,
-        speed: Optional[float] = None,
+        speed: float | None = None,
     ) -> ScanResult:
         # TODO: Implement using Nanonis Scan module commands:
         #   Scan.FrameSet (set scan frame)
@@ -135,7 +134,7 @@ class NanonisTransport(STMTransport):
         current_pa: float,
         offset_nm: np.ndarray,
         size_nm: float,
-    ) -> Optional[ManipulationResult]:
+    ) -> ManipulationResult | None:
         # TODO: Implement using Nanonis AtomManip module or
         #   manual tip movement with current feedback
         raise NotImplementedError(

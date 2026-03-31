@@ -9,19 +9,25 @@ from __future__ import annotations
 import asyncio
 import configparser
 import logging
-import signal
 import time
 from dataclasses import dataclass
-from typing import Optional
 
 import numpy as np
 
 from ..transport.protocol import STMTransport
 from .protocol import (
-    ApproachCommand, Command, GetParamCommand, MoveAreaCommand,
-    ScanCommand, TipCleanCommand, TipShapingCommand,
-    encode_approach_response, encode_movearea_response,
-    encode_param_response, encode_scan_response, encode_text_response,
+    ApproachCommand,
+    Command,
+    GetParamCommand,
+    MoveAreaCommand,
+    ScanCommand,
+    TipCleanCommand,
+    TipShapingCommand,
+    encode_approach_response,
+    encode_movearea_response,
+    encode_param_response,
+    encode_scan_response,
+    encode_text_response,
     parse_command,
 )
 
@@ -59,7 +65,7 @@ class ServerConfig:
     lim_pixel_max: int = 1024
 
     @classmethod
-    def from_ini(cls, path: str) -> "ServerConfig":
+    def from_ini(cls, path: str) -> ServerConfig:
         cfg = configparser.ConfigParser()
         cfg.read(path)
         c = cls()
@@ -90,10 +96,10 @@ class InstrumentServer:
         asyncio.run(server.serve_forever())
     """
 
-    def __init__(self, transport: STMTransport, config: Optional[ServerConfig] = None):
+    def __init__(self, transport: STMTransport, config: ServerConfig | None = None):
         self.transport = transport
         self.config = config or ServerConfig()
-        self._server: Optional[asyncio.AbstractServer] = None
+        self._server: asyncio.AbstractServer | None = None
 
     async def start(self) -> None:
         self._server = await asyncio.start_server(
@@ -167,12 +173,16 @@ class InstrumentServer:
             elif abs(bias) > 1e-6:
                 await loop.run_in_executor(None, lambda: self.transport.ramp_bias(bias * 1000))
                 await asyncio.sleep(timing)
-                await loop.run_in_executor(None, lambda: self.transport.ramp_bias(c.scan_bias_v * 1000))
+                def ramp():
+                    return self.transport.ramp_bias(c.scan_bias_v * 1000)
+                await loop.run_in_executor(None, ramp)
             await asyncio.sleep(c.shaping_wait_s)
             return encode_text_response("1")
 
         elif isinstance(cmd, TipCleanCommand):
-            await loop.run_in_executor(None, lambda: self.transport.tip_form(-50.0, cmd.x_nm, cmd.y_nm))
+            await loop.run_in_executor(
+                None, lambda: self.transport.tip_form(-50.0, cmd.x_nm, cmd.y_nm)
+            )
             return encode_text_response("1")
 
         elif isinstance(cmd, GetParamCommand):

@@ -15,7 +15,6 @@ from __future__ import annotations
 import abc
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Optional
 
 import numpy as np
 
@@ -101,7 +100,7 @@ class STMTransport(abc.ABC):
         offset_nm: np.ndarray,
         pixel: int,
         bias_mv: float,
-        speed: Optional[float] = None,
+        speed: float | None = None,
     ) -> ScanResult:
         """
         Perform an STM scan.
@@ -138,7 +137,7 @@ class STMTransport(abc.ABC):
         current_pa: float,
         offset_nm: np.ndarray,
         size_nm: float,
-    ) -> Optional[ManipulationResult]:
+    ) -> ManipulationResult | None:
         """
         Execute lateral manipulation (push/pull atom).
 

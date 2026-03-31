@@ -15,10 +15,7 @@ from __future__ import annotations
 
 import argparse
 import json
-import logging
 import sys
-
-import numpy as np
 
 
 def run_worker(args=None):

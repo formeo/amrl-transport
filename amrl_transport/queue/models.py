@@ -10,7 +10,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -40,7 +40,7 @@ class ManipulationTask(BaseModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     # What to build
-    targets: List[AtomTarget] = Field(..., description="Target atom positions")
+    targets: list[AtomTarget] = Field(..., description="Target atom positions")
 
     # Scan parameters
     scan_size_nm: float = Field(10.0)
@@ -53,20 +53,20 @@ class ManipulationTask(BaseModel):
     manipulation_current_pa: float = Field(57000.0)
 
     # Safety limits
-    manipulation_limit_nm: Optional[List[float]] = Field(
+    manipulation_limit_nm: list[float] | None = Field(
         None, description="[x_min, x_max, y_min, y_max]"
     )
 
     # Metadata
     requester: str = Field("unknown", description="Who submitted the task")
     priority: int = Field(5, description="1 (highest) to 10 (lowest)")
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class AtomResult(BaseModel):
     """Result for a single atom placement."""
     target: AtomTarget
-    final_position_nm: List[float]
+    final_position_nm: list[float]
     distance_to_target_nm: float
     episodes_used: int
     success: bool
@@ -81,11 +81,11 @@ class ManipulationResult(BaseModel):
     task_id: str
     worker_id: str
     status: TaskStatus
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
 
     # Per-atom results
-    atom_results: List[AtomResult] = Field(default_factory=list)
+    atom_results: list[AtomResult] = Field(default_factory=list)
 
     # Aggregate stats
     total_episodes: int = 0
@@ -94,9 +94,9 @@ class ManipulationResult(BaseModel):
     mean_precision_nm: float = 0.0
 
     # Error info
-    error_message: Optional[str] = None
-    error_traceback: Optional[str] = None
+    error_message: str | None = None
+    error_traceback: str | None = None
 
     # Raw data paths (for later analysis)
-    scan_data_path: Optional[str] = None
-    trajectory_data_path: Optional[str] = None
+    scan_data_path: str | None = None
+    trajectory_data_path: str | None = None

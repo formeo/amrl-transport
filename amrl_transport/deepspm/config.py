@@ -8,12 +8,11 @@ from __future__ import annotations
 
 import configparser
 from pathlib import Path
-from typing import Optional, Tuple
 
 from pydantic import BaseModel, Field
 
 
-def _parse_pair(s: str) -> Tuple[float, float]:
+def _parse_pair(s: str) -> tuple[float, float]:
     """Parse '80n;160n' -> (80e-9, 160e-9)."""
     from .protocol import _parse_val
     parts = s.strip().strip('"').split(";")
@@ -76,7 +75,7 @@ class ServerConfig(BaseModel):
     transport_type: str = Field("simulator", description="simulator | nanonis | amrl_transport")
     nanonis_host: str = Field("localhost")
     nanonis_port: int = Field(6501)
-    log_file: Optional[str] = Field(None)
+    log_file: str | None = Field(None)
 
     @classmethod
     def from_ini(cls, path: str | Path) -> ServerConfig:

@@ -7,9 +7,9 @@ This module provides clean parsing and encoding for both server and client.
 from __future__ import annotations
 
 import struct
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum, auto
-from typing import List, Optional, Tuple, Union
+from typing import Union
 
 import numpy as np
 
@@ -91,7 +91,7 @@ def _parse_value(s: str) -> float:
     return float(s)
 
 
-def _extract_args(text: str) -> List[str]:
+def _extract_args(text: str) -> list[str]:
     """Extract args from 'command(a,b,c)' -> ['a','b','c']."""
     inner = text.split("(", 1)[1].rstrip(")")
     return [a.strip() for a in inner.split(",")]
@@ -189,14 +189,14 @@ def encode_text_response(text: str) -> bytes:
 
 def encode_param_response(name: str, value: float) -> bytes:
     """Encode a getparam response as 'Name:value'."""
-    return f"{name}:{value}".encode("utf-8")
+    return f"{name}:{value}".encode()
 
 
 def encode_approach_response(z_range: float, crashes: int = 0) -> bytes:
     """Encode an approach response."""
-    return f"Approached. Z-range: {z_range}".encode("utf-8")
+    return f"Approached. Z-range: {z_range}".encode()
 
 
 def encode_movearea_response(crashes: int = 0) -> bytes:
     """Encode a movearea response."""
-    return f"Approach area changed with {crashes} crashes".encode("utf-8")
+    return f"Approach area changed with {crashes} crashes".encode()

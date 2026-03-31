@@ -38,8 +38,6 @@ The API is identical to RealExpEnv so existing RL training code
 """
 from __future__ import annotations
 
-from typing import Optional
-
 import numpy as np
 
 from .transport.protocol import STMTransport
@@ -119,8 +117,8 @@ class TransportEnv:
         scan_mV: float,
         max_len: int,
         load_weight: str,
-        pull_back_mV: Optional[float] = None,
-        pull_back_pA: Optional[float] = None,
+        pull_back_mV: float | None = None,
+        pull_back_pA: float | None = None,
         random_scan_rate: float = 0.5,
         correct_drift: bool = False,
         bottom: bool = True,

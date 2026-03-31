@@ -8,13 +8,11 @@ Usage:
 """
 from __future__ import annotations
 
-import json
 import logging
 import time
-from typing import Optional
 
 from ..config.models import QueueConfig
-from .models import ManipulationResult, ManipulationTask, TaskStatus
+from .models import ManipulationResult, ManipulationTask
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +76,7 @@ class TaskClient:
         logger.info("Task %s submitted (%d atoms)", task.task_id, len(task.targets))
         return task.task_id
 
-    def get_result(self, task_id: str) -> Optional[ManipulationResult]:
+    def get_result(self, task_id: str) -> ManipulationResult | None:
         """
         Get the result for a task (non-blocking).
 

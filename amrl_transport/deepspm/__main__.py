@@ -1,8 +1,11 @@
 """
 python -m amrl_transport.deepspm --transport simulator --port 50008
 """
-import argparse, asyncio, logging, sys
-import numpy as np
+import argparse
+import asyncio
+import logging
+import sys
+
 
 def main():
     p = argparse.ArgumentParser(description="DeepSPM Server (Python)")
@@ -13,13 +16,22 @@ def main():
     p.add_argument("--seed", type=int, default=None)
     opts = p.parse_args()
 
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s|%(levelname)s|%(message)s", stream=sys.stdout)
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s|%(levelname)s|%(message)s",
+        stream=sys.stdout,
+    )
 
-    from ..config.models import TransportConfig, TransportType, SimulatorConfig
+    from ..config.models import SimulatorConfig, TransportConfig, TransportType
     from ..transport.factory import create_transport
     from .server import InstrumentServer, ServerConfig
 
-    tcfg = TransportConfig(type=TransportType(opts.transport), simulator=SimulatorConfig(seed=opts.seed, initial_atoms=[[0,0],[5,5]]))
+    tcfg = TransportConfig(
+        type=TransportType(opts.transport),
+        simulator=SimulatorConfig(
+            seed=opts.seed, initial_atoms=[[0, 0], [5, 5]]
+        ),
+    )
     transport = create_transport(tcfg)
     transport.connect()
 

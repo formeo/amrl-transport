@@ -1,3 +1,4 @@
+from .factory import create_transport
 from .protocol import (
     ConnectionState,
     ManipulationResult,
@@ -5,7 +6,6 @@ from .protocol import (
     STMTransport,
     TipPosition,
 )
-from .factory import create_transport
 from .simulator import SimulatorTransport
 
 __all__ = [

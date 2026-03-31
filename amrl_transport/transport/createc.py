@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Optional
 
 import numpy as np
 
@@ -127,8 +126,8 @@ class CreatecTransport(STMTransport):
         self,
         x_start_nm: float,
         y_start_nm: float,
-        x_end_nm: Optional[float],
-        y_end_nm: Optional[float],
+        x_end_nm: float | None,
+        y_end_nm: float | None,
         offset_nm: np.ndarray,
         len_nm: float,
     ) -> tuple:
@@ -173,7 +172,7 @@ class CreatecTransport(STMTransport):
         offset_nm: np.ndarray,
         pixel: int,
         bias_mv: float,
-        speed: Optional[float] = None,
+        speed: float | None = None,
     ) -> ScanResult:
         self.ramp_bias(bias_mv)
 
@@ -221,7 +220,7 @@ class CreatecTransport(STMTransport):
         current_pa: float,
         offset_nm: np.ndarray,
         size_nm: float,
-    ) -> Optional[ManipulationResult]:
+    ) -> ManipulationResult | None:
         pixels = self._nm_to_pixel(
             x_start_nm, y_start_nm, x_end_nm, y_end_nm, offset_nm, size_nm
         )
