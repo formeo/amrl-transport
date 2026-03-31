@@ -7,10 +7,9 @@ Run: pytest tests/ -v
 import numpy as np
 import pytest
 
-from amrl_transport.config.models import TransportConfig, TransportType, SimulatorConfig
+from amrl_transport.config.models import SimulatorConfig, TransportConfig, TransportType
 from amrl_transport.transport import SimulatorTransport, create_transport
-from amrl_transport.transport.protocol import ScanResult, ManipulationResult, TipPosition
-
+from amrl_transport.transport.protocol import ScanResult, TipPosition
 
 # ── Simulator basic operations ────────────────────────────────
 

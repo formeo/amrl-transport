@@ -12,14 +12,13 @@ Follows the patterns from Roman's dp_rabbit work:
 """
 from __future__ import annotations
 
-import json
 import logging
 import signal
 import sys
 import time
 import traceback
 from datetime import datetime, timezone
-from typing import Callable, Optional
+from typing import Callable
 
 from ..config.models import WorkerConfig
 from ..transport.factory import create_transport
@@ -58,15 +57,15 @@ class Worker:
     def __init__(
         self,
         config: WorkerConfig,
-        task_handler: Optional[Callable] = None,
+        task_handler: Callable | None = None,
     ) -> None:
         self._config = config
         self._task_handler = task_handler or self._default_task_handler
-        self._transport: Optional[STMTransport] = None
+        self._transport: STMTransport | None = None
         self._connection = None
         self._channel = None
         self._should_stop = False
-        self._current_task_id: Optional[str] = None
+        self._current_task_id: str | None = None
 
     def run(self) -> None:
         """Start the worker. Blocks until SIGTERM/SIGINT."""

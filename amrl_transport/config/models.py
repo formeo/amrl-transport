@@ -7,7 +7,6 @@ Configs can be loaded from YAML/JSON files or environment variables.
 from __future__ import annotations
 
 from enum import Enum
-from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -34,8 +33,8 @@ class SimulatorConfig(BaseModel):
     lattice_constant: float = Field(0.288, description="Lattice constant in nm")
     noise_level: float = Field(0.05, description="Scan noise std")
     manipulation_success_rate: float = Field(0.7, description="Manipulation success probability")
-    seed: Optional[int] = Field(None, description="Random seed")
-    initial_atoms: Optional[List[List[float]]] = Field(
+    seed: int | None = Field(None, description="Random seed")
+    initial_atoms: list[list[float]] | None = Field(
         None, description="Initial atom positions [[x,y], ...]"
     )
 
@@ -60,14 +59,14 @@ class TransportConfig(BaseModel):
 class ManipulationTaskConfig(BaseModel):
     """Configuration for a single manipulation task."""
     task_id: str = Field(..., description="Unique task identifier")
-    design_positions_nm: List[List[float]] = Field(
+    design_positions_nm: list[list[float]] = Field(
         ..., description="Target positions for atoms [[x,y], ...]"
     )
     scan_size_nm: float = Field(10.0, description="Scan area size in nm")
     scan_pixel: int = Field(128, description="Scan pixels")
     scan_bias_mv: float = Field(100.0, description="Scan bias in mV")
     max_episodes: int = Field(100, description="Max manipulation episodes")
-    manipulation_limit_nm: Optional[List[float]] = Field(
+    manipulation_limit_nm: list[float] | None = Field(
         None, description="[x_min, x_max, y_min, y_max] in nm"
     )
 

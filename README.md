@@ -1,8 +1,11 @@
+[![CI](https://github.com/formeo/amrl-transport/actions/workflows/ci.yml/badge.svg)](https://github.com/formeo/amrl-transport/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/amrl-transport.svg)](https://pypi.org/project/amrl-transport/)
-[![Tests](https://img.shields.io/badge/tests-41%20passed-brightgreen)]()
+[![codecov](https://codecov.io/gh/formeo/amrl-transport/branch/main/graph/badge.svg)](https://codecov.io/gh/formeo/amrl-transport)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19049387.svg)](https://doi.org/10.5281/zenodo.19049387)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![PyPI Downloads](https://static.pepy.tech/badge/amrl-transport/month)](https://pepy.tech/projects/amrl-transport)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
+
 
 # AMRL Transport
 
@@ -173,8 +176,8 @@ See [amrl_transport/transport/simulator.py](amrl_transport/transport/simulator.p
 
 ```bash
 pip install -e ".[dev]"
-pytest tests/ -v
-# 41 tests passing — simulator backend, no hardware required
+pytest tests/ -v --cov=amrl_transport
+# 56 tests passing — simulator, protocol, models, config
 ```
 
 ## Related work
@@ -183,6 +186,14 @@ pytest tests/ -v
 - [abred/DeepSPM](https://github.com/abred/DeepSPM) — automated SPM with deep learning
 - [Probe-Particle/ppafm](https://github.com/Probe-Particle/ppafm) — AFM image simulator
 - [bluesky/ophyd-async](https://github.com/bluesky/ophyd-async) — hardware abstraction for synchrotron beamlines (similar pattern at larger scale)
+
+
+## Keywords
+
+`STM` · `AFM` · `scanning probe microscopy` · `atom manipulation` ·
+`reinforcement learning` · `nanofabrication` · `laboratory automation` ·
+`hardware abstraction` · `DeepSPM` · `Nanonis` · `Createc` ·
+`quantum computing fabrication` · `nanoassembly` · `tip-induced manipulation`
 
 ## License
 

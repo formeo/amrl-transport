@@ -16,7 +16,6 @@ This allows:
 from __future__ import annotations
 
 import logging
-from typing import Optional
 
 import numpy as np
 
@@ -56,10 +55,10 @@ class SimulatorTransport(STMTransport):
     def __init__(
         self,
         lattice_constant: float = 0.288,
-        atom_positions: Optional[np.ndarray] = None,
+        atom_positions: np.ndarray | None = None,
         noise_level: float = 0.05,
         manipulation_success_rate: float = 0.7,
-        seed: Optional[int] = None,
+        seed: int | None = None,
     ) -> None:
         self._lattice = lattice_constant
         self._noise = noise_level
@@ -96,7 +95,7 @@ class SimulatorTransport(STMTransport):
         # Coordinate grid
         x_min = offset_nm[0] - size_nm / 2
         x_max = offset_nm[0] + size_nm / 2
-        y_min = offset_nm[1] - size_nm / 2  
+        y_min = offset_nm[1] - size_nm / 2
         y_max = offset_nm[1] + size_nm / 2
 
         xs = np.linspace(x_min, x_max, pixel)
@@ -129,7 +128,7 @@ class SimulatorTransport(STMTransport):
         offset_nm: np.ndarray,
         pixel: int,
         bias_mv: float,
-        speed: Optional[float] = None,
+        speed: float | None = None,
     ) -> ScanResult:
         self._bias_mv = bias_mv
         img_fwd = self._render_image(size_nm, offset_nm, pixel)
@@ -153,7 +152,7 @@ class SimulatorTransport(STMTransport):
         current_pa: float,
         offset_nm: np.ndarray,
         size_nm: float,
-    ) -> Optional[ManipulationResult]:
+    ) -> ManipulationResult | None:
         if (x_start_nm == x_end_nm) and (y_start_nm == y_end_nm):
             return None
 

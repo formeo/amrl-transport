@@ -5,8 +5,8 @@ DeepSPM compatibility layer — Python replacement for LabVIEW server.
 - DeepSPMClient: clean Python client
 - EnvClientCompat: drop-in for envClient.EnvClient
 """
-from .server import InstrumentServer, ServerConfig
 from .client import DeepSPMClient, EnvClientCompat
+from .server import InstrumentServer, ServerConfig
 
 __all__ = [
     "InstrumentServer", "ServerConfig",

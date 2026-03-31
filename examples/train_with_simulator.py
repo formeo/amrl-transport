@@ -13,8 +13,8 @@ Usage:
 """
 import numpy as np
 
-from amrl_transport.transport import SimulatorTransport
 from amrl_transport.integration import TransportEnv
+from amrl_transport.transport import SimulatorTransport
 
 
 def main():

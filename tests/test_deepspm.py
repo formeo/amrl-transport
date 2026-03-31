@@ -12,20 +12,19 @@ import time
 import numpy as np
 import pytest
 
+from amrl_transport.deepspm.client import DeepSPMClient
 from amrl_transport.deepspm.protocol import (
     CommandType,
-    ScanCommand,
-    TipShapingCommand,
     GetParamCommand,
     MoveAreaCommand,
-    encode_scan_response,
+    ScanCommand,
+    TipShapingCommand,
     encode_param_response,
+    encode_scan_response,
     parse_command,
 )
 from amrl_transport.deepspm.server import InstrumentServer, ServerConfig
-from amrl_transport.deepspm.client import DeepSPMClient
 from amrl_transport.transport import SimulatorTransport
-
 
 # ── Protocol parsing tests ────────────────────────────────────
 

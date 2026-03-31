@@ -1,3 +1,4 @@
+from .client import TaskClient
 from .models import (
     AtomResult,
     AtomTarget,
@@ -5,7 +6,6 @@ from .models import (
     ManipulationTask,
     TaskStatus,
 )
-from .client import TaskClient
 from .worker import Worker
 
 __all__ = [

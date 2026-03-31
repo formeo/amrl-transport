@@ -4,18 +4,20 @@ build-backend = "hatchling.build"
 
 [project]
 name = "amrl-transport"
-version = "0.1.0"
+version = "0.2.0"
 description = "Hardware abstraction and task queue for autonomous atom manipulation with STM/AFM. Drop-in LabVIEW replacement for DeepSPM."
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.9"
 authors = [
-    { name = "Roman Gordienko", email = "formeo@yandex.ru" },
+    { name = "Roman Gordienko", email = "grlformeo@gmail.com" },
 ]
 keywords = [
     "STM", "AFM", "scanning-probe-microscopy", "atom-manipulation",
     "reinforcement-learning", "nanofabrication", "automation",
     "DeepSPM", "Nanonis", "Createc", "laboratory-automation",
+    "hardware-abstraction", "nanoassembly", "tip-induced-manipulation",
+    "quantum-computing-fabrication", "scientific-instruments",
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -75,6 +77,14 @@ target-version = "py39"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+# EnvClientCompat uses camelCase to match DeepSPM's envClient API
+"amrl_transport/deepspm/client.py" = ["N802", "N803"]
+# TransportEnv params match SINGROUP's RealExpEnv API
+"amrl_transport/integration.py" = ["N803"]
+# Example intentionally imports to check availability
+"examples/train_with_simulator.py" = ["F401"]
 
 [tool.mypy]
 python_version = "3.9"

@@ -5,7 +5,7 @@ abstract: "Hardware abstraction layer and task queue for autonomous atom manipul
 authors:
   - family-names: "Gordienko"
     given-names: "Roman"
-version: 0.1.0
+version: 0.2.0
 doi: "10.5281/zenodo.19049387" 
 date-released: 2026-03-16
 license: MIT
