@@ -87,7 +87,6 @@ class NanonisTransport(STMTransport):
 
         # Read response header
         resp_header = self._recv_exact(36)
-        resp_header[:32].rstrip(b"\x00").decode("ascii")
         resp_size = struct.unpack(">I", resp_header[32:36])[0]
 
         # Read response body

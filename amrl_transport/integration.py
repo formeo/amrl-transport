@@ -250,7 +250,6 @@ class TransportEnv:
             "end_nm": np.array([x_e, y_e]),
         }
 
-        done = False
         self.len += 1
         done = self.len == self.max_len
 

@@ -192,7 +192,7 @@ def encode_param_response(name: str, value: float) -> bytes:
     return f"{name}:{value}".encode()
 
 
-def encode_approach_response(z_range: float, crashes: int = 0) -> bytes:
+def encode_approach_response(z_range: float) -> bytes:
     """Encode an approach response."""
     return f"Approached. Z-range: {z_range}".encode()
 

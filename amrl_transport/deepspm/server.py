@@ -136,17 +136,24 @@ class InstrumentServer:
                     writer.write(resp)
                     await writer.drain()
                 except Exception as e:
-                    logger.error("Error: %s", e, exc_info=True)
-                    writer.write(encode_text_response(f"ERROR:{e}"))
-                    await writer.drain()
+                    # A text error would corrupt the binary protocol mid-scan;
+                    # drop the connection and let the agent reconnect/retry.
+                    logger.error(
+                        "Error handling command, closing connection: %s", e, exc_info=True
+                    )
+                    break
         except (asyncio.CancelledError, ConnectionResetError):
             pass
         finally:
             writer.close()
+            try:
+                await writer.wait_closed()
+            except (ConnectionResetError, BrokenPipeError):
+                pass
             logger.info("Agent %s disconnected", addr)
 
     async def _dispatch(self, cmd: Command) -> bytes:
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         c = self.config
 
         if isinstance(cmd, ScanCommand):
