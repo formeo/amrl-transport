@@ -42,7 +42,7 @@ def main():
         template=template,
         current_jump=4,
         im_size_nm=5.0,
-        offset_nm=np.array([0.0, 0.0]),
+        offset_nm=np.array([0.0, -2.5]),  # Y offset = top of frame → atom centred
         manip_limit_nm=np.array([-4.0, 4.0, -4.0, 4.0]),
         pixel=64,
         template_max_y=30,

@@ -62,6 +62,11 @@ class STMTransport(abc.ABC):
     physical units (nm, mV, pA) — conversion to hardware-specific
     units (DAC, pixels, volts) is the adapter's responsibility.
 
+    Scan frame (Createc / SINGROUP convention, shared by all adapters):
+    for a scan of size L at ``offset_nm``, X spans
+    ``[offset_x - L/2, offset_x + L/2)`` and Y spans ``[offset_y, offset_y + L)``.
+    Image column index grows with X, row index grows with Y.
+
     Lifecycle:
         controller = SomeAdapter(config)
         controller.connect()
@@ -110,7 +115,8 @@ class STMTransport(abc.ABC):
         size_nm : float
             Image size in nm.
         offset_nm : ndarray, shape (2,)
-            XY offset in nm.
+            XY offset in nm: centre of the frame in X, start of the frame in Y
+            (see class docstring).
         pixel : int
             Number of scan pixels.
         bias_mv : float

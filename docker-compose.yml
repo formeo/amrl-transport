@@ -1,6 +1,7 @@
 version: "3.9"
 
-# Local development stack for AMRL task queue.
+# Local development stack for the EXPERIMENTAL task queue (frozen).
+# Run workers on the host: python -m amrl_transport.cli worker --transport simulator
 # Usage: docker compose up -d
 
 services:
@@ -31,24 +32,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
-  # Example worker using the simulator (no real STM needed)
-  worker-sim:
-    build: .
-    command: >
-      python -m amrl_transport.cli worker
-        --transport simulator
-        --broker amqp://amrl:amrl@rabbitmq:5672/
-        --redis redis://redis:6379/0
-        --worker-id sim-worker-01
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    restart: unless-stopped
-    profiles:
-      - worker
 
 volumes:
   rabbitmq_data:

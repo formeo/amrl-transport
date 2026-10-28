@@ -2,7 +2,10 @@
 DeepSPM Instrument Server — pure Python/asyncio replacement for LabVIEW.
 
 Speaks the same TCP protocol as the original LabVIEW TCPIP.Server v2.vi.
-The DeepSPM agent code works WITHOUT MODIFICATION — just point it here.
+
+approach(), movearea() and tipclean() are only simulated: with any transport
+other than the simulator they are refused (the connection is closed) rather
+than reporting a success that never happened on the instrument.
 """
 from __future__ import annotations
 
@@ -10,11 +13,13 @@ import asyncio
 import configparser
 import logging
 import time
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 
 import numpy as np
 
 from ..transport.protocol import STMTransport
+from ..transport.simulator import SimulatorTransport
 from .protocol import (
     ApproachCommand,
     Command,
@@ -86,6 +91,22 @@ class ServerConfig:
         return c
 
 
+def _init_hardware_thread() -> None:
+    """COM objects (Createc) need COM initialised in the thread that calls them."""
+    try:
+        import pythoncom
+    except ImportError:
+        return
+    pythoncom.CoInitialize()
+
+
+def _limit_signed(value: float, lo: float, hi: float) -> float:
+    """Clip |value| to [lo, hi] keeping the sign; 0 stays 0."""
+    if value == 0:
+        return 0.0
+    return float(np.sign(value) * np.clip(abs(value), lo, hi))
+
+
 class InstrumentServer:
     """
     Async TCP server replacing the LabVIEW DeepSPM instrument control server.
@@ -100,6 +121,9 @@ class InstrumentServer:
         self.transport = transport
         self.config = config or ServerConfig()
         self._server: asyncio.AbstractServer | None = None
+        # One thread owns the instrument (COM apartment), one command at a time.
+        self._hw = ThreadPoolExecutor(max_workers=1, initializer=_init_hardware_thread)
+        self._hw_lock = asyncio.Lock()
 
     async def start(self) -> None:
         self._server = await asyncio.start_server(
@@ -118,6 +142,7 @@ class InstrumentServer:
         if self._server:
             self._server.close()
             await self._server.wait_closed()
+        self._hw.shutdown(wait=True)
 
     async def _handle_client(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
         addr = writer.get_extra_info("peername")
@@ -153,15 +178,27 @@ class InstrumentServer:
             logger.info("Agent %s disconnected", addr)
 
     async def _dispatch(self, cmd: Command) -> bytes:
+        async with self._hw_lock:
+            return await self._dispatch_locked(cmd)
+
+    def _require_simulator(self, cmd: Command) -> None:
+        if not isinstance(self.transport, SimulatorTransport):
+            raise NotImplementedError(
+                f"{type(cmd).__name__} is not implemented for {self.transport.name}"
+            )
+
+    async def _dispatch_locked(self, cmd: Command) -> bytes:
         loop = asyncio.get_running_loop()
         c = self.config
 
         if isinstance(cmd, ScanCommand):
             size_m = np.clip(cmd.size_nm * 1e-9, c.lim_image_min_m, c.lim_image_max_m)
             px = int(np.clip(cmd.pixels, c.lim_pixel_min, c.lim_pixel_max))
-            result = await loop.run_in_executor(None, lambda: self.transport.scan_image(
+            result = await loop.run_in_executor(self._hw, lambda: self.transport.scan_image(
                 size_nm=size_m * 1e9,
-                offset_nm=np.array([cmd.x_nm, cmd.y_nm]),
+                # DeepSPM sends the frame centre (Nanonis Scan.FrameSet);
+                # STMTransport's Y offset is the start of the frame.
+                offset_nm=np.array([cmd.x_nm, cmd.y_nm - size_m * 1e9 / 2]),
                 pixel=px,
                 bias_mv=c.scan_bias_v * 1000,
             ))
@@ -171,24 +208,25 @@ class InstrumentServer:
             if cmd.action_str == "stall":
                 return encode_text_response("0.5")
             dip = np.clip(cmd.dip_m, c.lim_dip_min_m, c.lim_dip_max_m)
-            bias = np.clip(cmd.bias_v, c.lim_bias_min_v, c.lim_bias_max_v)
+            bias = _limit_signed(cmd.bias_v, c.lim_bias_min_v, c.lim_bias_max_v)
             timing = np.clip(cmd.timing_s, c.lim_time_min_s, c.lim_time_max_s)
             if abs(dip) > 1e-12:
-                await loop.run_in_executor(None, lambda: self.transport.tip_form(
+                await loop.run_in_executor(self._hw, lambda: self.transport.tip_form(
                     dip * 1e10, cmd.x_nm, cmd.y_nm,
                 ))
             elif abs(bias) > 1e-6:
-                await loop.run_in_executor(None, lambda: self.transport.ramp_bias(bias * 1000))
+                await loop.run_in_executor(self._hw, lambda: self.transport.ramp_bias(bias * 1000))
                 await asyncio.sleep(timing)
                 def ramp():
                     return self.transport.ramp_bias(c.scan_bias_v * 1000)
-                await loop.run_in_executor(None, ramp)
+                await loop.run_in_executor(self._hw, ramp)
             await asyncio.sleep(c.shaping_wait_s)
             return encode_text_response("1")
 
         elif isinstance(cmd, TipCleanCommand):
+            self._require_simulator(cmd)
             await loop.run_in_executor(
-                None, lambda: self.transport.tip_form(-50.0, cmd.x_nm, cmd.y_nm)
+                self._hw, lambda: self.transport.tip_form(-50.0, cmd.x_nm, cmd.y_nm)
             )
             return encode_text_response("1")
 
@@ -200,9 +238,11 @@ class InstrumentServer:
             return encode_param_response(cmd.param_name, 0.0)
 
         elif isinstance(cmd, ApproachCommand):
+            self._require_simulator(cmd)
             return encode_approach_response(c.z_range_m)
 
         elif isinstance(cmd, MoveAreaCommand):
+            self._require_simulator(cmd)
             return encode_movearea_response(crashes=0)
 
         return encode_text_response("ERROR:unknown")

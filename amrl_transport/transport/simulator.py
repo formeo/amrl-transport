@@ -92,14 +92,10 @@ class SimulatorTransport(STMTransport):
         """Render a synthetic STM image with atom blobs."""
         img = np.zeros((pixel, pixel), dtype=float)
 
-        # Coordinate grid
-        x_min = offset_nm[0] - size_nm / 2
-        x_max = offset_nm[0] + size_nm / 2
-        y_min = offset_nm[1] - size_nm / 2
-        y_max = offset_nm[1] + size_nm / 2
-
-        xs = np.linspace(x_min, x_max, pixel)
-        ys = np.linspace(y_min, y_max, pixel)
+        # Pixel grid in the STMTransport frame: X centred on offset, Y from offset
+        step = size_nm / pixel
+        xs = offset_nm[0] - size_nm / 2 + step * np.arange(pixel)
+        ys = offset_nm[1] + step * np.arange(pixel)
         xx, yy = np.meshgrid(xs, ys)
 
         # Atom FWHM ~ 0.15 nm for typical adatom

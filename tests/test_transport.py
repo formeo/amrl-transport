@@ -48,7 +48,7 @@ class TestSimulatorTransport:
         """Atom at (0,0) should produce a peak in center of image."""
         result = self.stm.scan_image(
             size_nm=2.0,
-            offset_nm=np.array([0.0, 0.0]),
+            offset_nm=np.array([0.0, -1.0]),  # Y offset is the start of the frame
             pixel=128,
             bias_mv=100,
         )
