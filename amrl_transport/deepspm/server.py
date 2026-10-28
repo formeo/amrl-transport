@@ -196,7 +196,9 @@ class InstrumentServer:
             px = int(np.clip(cmd.pixels, c.lim_pixel_min, c.lim_pixel_max))
             result = await loop.run_in_executor(self._hw, lambda: self.transport.scan_image(
                 size_nm=size_m * 1e9,
-                offset_nm=np.array([cmd.x_nm, cmd.y_nm]),
+                # DeepSPM sends the frame centre (Nanonis Scan.FrameSet);
+                # STMTransport's Y offset is the start of the frame.
+                offset_nm=np.array([cmd.x_nm, cmd.y_nm - size_m * 1e9 / 2]),
                 pixel=px,
                 bias_mv=c.scan_bias_v * 1000,
             ))

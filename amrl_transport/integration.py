@@ -327,7 +327,7 @@ class TransportEnv:
                 idx = np.unravel_index(np.argmax(img), img.shape)
                 y_frac, x_frac = idx[0] / img.shape[0], idx[1] / img.shape[1]
                 x_nm = self.offset_nm[0] - self.len_nm / 2 + x_frac * self.len_nm
-                y_nm = self.offset_nm[1] - self.len_nm / 2 + y_frac * self.len_nm
+                y_nm = self.offset_nm[1] + y_frac * self.len_nm
                 abs_nm = np.array([x_nm, y_nm])
                 rel_nm = abs_nm - self.offset_nm
 
