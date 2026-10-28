@@ -11,7 +11,9 @@
 
 **Hardware abstraction layer for autonomous atom manipulation with STM/AFM.**
 
-Drop-in replacement for [SINGROUP](https://github.com/SINGROUP/Atom_manipulation_with_RL)'s `RealExpEnv` — train RL agents on a simulator, deploy on real hardware without code changes. Also replaces the [DeepSPM](https://github.com/abred/DeepSPM) LabVIEW instrument server with a pure Python asyncio implementation.
+Same API as [SINGROUP](https://github.com/SINGROUP/Atom_manipulation_with_RL)'s `RealExpEnv`, backed by a pluggable transport — develop RL agents against a simulator, then swap in a hardware adapter. Also includes a pure Python asyncio server that speaks the [DeepSPM](https://github.com/abred/DeepSPM) LabVIEW instrument-server protocol.
+
+> **Status: alpha.** Everything runs end-to-end against the built-in simulator. The Createc adapter is a port of SINGROUP's controller and has **not yet been run on an instrument**; the Nanonis adapter is a stub. Hardware testers and lab collaborators are very welcome — please open an issue.
 
 ## The problem
 
@@ -19,13 +21,15 @@ RL frameworks for atom manipulation ([DeepSPM](https://github.com/abred/DeepSPM)
 
 ## What this solves
 
-- **`STMTransport` ABC** — 12 methods with physical units (nm, mV, pA). Implement once per vendor, use any RL agent.
-- **Simulator backend** — Gaussian atom physics, tip-sample interaction, configurable noise. No hardware, no Windows, no license fees.
-- **DeepSPM server replacement** — pure Python asyncio server that speaks the DeepSPM wire protocol. Replaces LabVIEW (BSD-3, Windows-only, ~$3500/yr). Existing DeepSPM agent code works unchanged — just point it at the Python server.
-- **Distributed task queue** — RabbitMQ + Redis for queuing manipulation tasks across multiple instruments with retry, backoff, and graceful shutdown.
-- **`TransportEnv`** — drop-in for SINGROUP's `RealExpEnv`. Existing training code works as-is.
+- **`STMTransport` ABC** — 12 methods with physical units (nm, mV, pA) and one scan-frame convention (below). Implement once per vendor, use any RL agent.
+- **Simulator backend** — synthetic images (Gaussian adatoms, lattice corrugation, noise) and a simple stochastic manipulation model. No hardware, no Windows, no license fees. It is a development and CI tool, not a physical model: atoms move continuously rather than hopping between lattice sites, and there is no drift or tip change.
+- **DeepSPM-protocol server** — pure Python asyncio server for the DeepSPM agent. `scan()`, `tipshaping()` and `getparam()` go through the transport; `approach()`, `movearea()` and `tipclean()` are simulated only and are refused on real hardware. All instrument calls are serialized on one thread; bias pulses are limited by magnitude and keep their sign.
+- **`TransportEnv`** — same `reset()`/`step()` contract as SINGROUP's `RealExpEnv`. To use SINGROUP's atom detector and jump-detection CNN, the `AMRL` package must be importable; otherwise simple fallbacks are used.
+- **Task queue (experimental, frozen)** — RabbitMQ + Redis prototype. Not for use with instruments; see [below](#task-queue-experimental-frozen).
 
 ## Architecture
+
+The queue layer at the top is an experimental prototype (see [below](#task-queue-experimental-frozen)); the transport layer, simulator and DeepSPM server are the core.
 
 ```
 ┌───────────────────────────────────────────────────────┐
@@ -63,6 +67,10 @@ RL frameworks for atom manipulation ([DeepSPM](https://github.com/abred/DeepSPM)
               └─────────────────┘
 ```
 
+## Scan-frame convention
+
+All transports use the Createc / SINGROUP frame: for a scan of size `L` at `offset_nm`, X spans `[offset_x − L/2, offset_x + L/2)` and Y spans `[offset_y, offset_y + L)`. Image columns grow with X, rows grow with Y. (The DeepSPM server converts DeepSPM's frame-centre coordinates to this convention.)
+
 ## Quick start
 
 ### Install
@@ -71,8 +79,8 @@ RL frameworks for atom manipulation ([DeepSPM](https://github.com/abred/DeepSPM)
 # Core (numpy + pydantic only)
 pip install amrl-transport
 
-# With task queue support
-pip install amrl-transport[queue]
+# Createc adapter (Windows, COM)
+pip install amrl-transport[createc]
 
 # With ML dependencies (for SINGROUP RL agent integration)
 pip install amrl-transport[all]
@@ -85,10 +93,10 @@ from amrl_transport.transport import SimulatorTransport
 import numpy as np
 
 with SimulatorTransport(seed=42) as stm:
-    # Scan a 5nm × 5nm area
+    # Scan a 5nm × 5nm area with the atom at (0, 0) in the centre
     result = stm.scan_image(
         size_nm=5.0,
-        offset_nm=np.array([0.0, 0.0]),
+        offset_nm=np.array([0.0, -2.5]),  # X centre, Y start of frame
         pixel=128,
         bias_mv=100,
     )
@@ -104,9 +112,10 @@ with SimulatorTransport(seed=42) as stm:
     print(f"Current trace length: {len(manip.current)}")
 ```
 
-### Use as RL environment (drop-in for RealExpEnv)
+### Use as RL environment (RealExpEnv API)
 
 ```python
+import numpy as np
 from amrl_transport.transport import SimulatorTransport
 from amrl_transport.integration import TransportEnv
 
@@ -118,35 +127,36 @@ env = TransportEnv(
     step_nm=0.2,
     max_mvolt=20,
     max_pcurrent_to_mvolt_ratio=2850,
-    goal_nm=2.0,
+    goal_nm=1.5,
+    template=np.zeros((16, 16)),          # SINGROUP template-matching image
+    current_jump=4,
+    im_size_nm=5.0,
+    offset_nm=np.array([0.0, -2.5]),
+    manip_limit_nm=np.array([-2.0, 2.0, -2.0, 2.0]),
+    pixel=64,
+    template_max_y=30,
+    scan_mV=100,
+    max_len=10,
+    load_weight="atom_move_detector.pth",  # used only if AMRL is installed
 )
 
-# Existing SINGROUP training code works as-is
 state, info = env.reset()
+action = np.random.uniform(-1, 1, size=6)  # or your SAC agent
 next_state, reward, done, info = env.step(action)
 ```
 
-### DeepSPM server (replaces LabVIEW)
+A complete loop is in [`examples/train_with_simulator.py`](examples/train_with_simulator.py).
+
+### DeepSPM-protocol server
 
 ```bash
-# Start the Python instrument server with simulator backend
+# Start the Python instrument server with simulator backend (default port 50008)
 python -m amrl_transport.deepspm --transport simulator
 
-# Existing DeepSPM agent connects to localhost:5556 — no code changes
+# Point the DeepSPM agent at localhost:50008
 ```
 
-### Distributed task queue
-
-```bash
-# Start infrastructure
-docker compose up -d
-
-# Start a worker
-python -m amrl_transport.cli worker --transport simulator --worker-id sim-01
-
-# Submit a task
-python -m amrl_transport.cli submit --atoms '[[0,0],[1,0],[0.5,0.866]]'
-```
+With a hardware transport, `approach()`, `movearea()` and `tipclean()` are not implemented yet: the server logs an error and closes the connection instead of reporting a fake success.
 
 ## Implementing a new adapter
 
@@ -168,16 +178,33 @@ See [amrl_transport/transport/simulator.py](amrl_transport/transport/simulator.p
 
 | Backend | Status | Platform | Notes |
 |---------|--------|----------|-------|
-| **Simulator** | ✅ Ready | Any | Gaussian atoms, noise, tip physics |
-| **Createc** | ✅ Ready | Windows | COM interface via `pyvisa` |
-| **Nanonis** | 🔧 Stub | Any | TCP socket protocol |
+| **Simulator** | ✅ Ready | Any | Gaussian atoms, lattice corrugation, noise |
+| **Createc** | 🧪 Ported, untested on hardware | Windows | COM interface via `pywin32` |
+| **Nanonis** | 🔧 Stub | Any | TCP socket protocol — not implemented |
 
 ## Testing
 
 ```bash
 pip install -e ".[dev]"
 pytest tests/ -v --cov=amrl_transport
-# 56 tests passing — simulator, protocol, models, config
+```
+
+Tests run on the simulator and on fake COM objects — no hardware needed.
+
+## Task queue (experimental, frozen)
+
+`amrl_transport.queue` is a RabbitMQ + Redis prototype kept for reference. **Do not connect it to an instrument.** Known issues:
+
+- the default task handler is a placeholder: it reports `COMPLETED` without placing any atoms;
+- tasks run inside the pika callback, so missed heartbeats or the RabbitMQ consumer timeout can redeliver a task and execute it again;
+- malformed messages are requeued forever (no retry limit, no dead-letter queue);
+- task `priority` is documented as "1 = highest", but RabbitMQ treats larger numbers as higher priority.
+
+```bash
+pip install amrl-transport[queue]
+docker compose up -d   # RabbitMQ + Redis only
+python -m amrl_transport.cli worker --transport simulator --broker amqp://amrl:amrl@localhost:5672/
+python -m amrl_transport.cli submit --atoms '[[0,0],[1,0],[0.5,0.866]]' --broker amqp://amrl:amrl@localhost:5672/
 ```
 
 ## Related work

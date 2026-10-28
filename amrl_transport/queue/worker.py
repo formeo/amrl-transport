@@ -4,11 +4,7 @@ Task queue worker for STM manipulation.
 Connects to RabbitMQ, consumes ManipulationTask messages, executes them
 on the configured STM transport, and publishes results to Redis.
 
-Follows the patterns from Roman's dp_rabbit work:
-- Graceful shutdown via SIGTERM/SIGINT
-- Heartbeat-aware connection management
-- Exponential backoff on reconnection
-- Structured logging
+EXPERIMENTAL / FROZEN — see amrl_transport.queue for known issues.
 """
 from __future__ import annotations
 
