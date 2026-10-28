@@ -271,7 +271,21 @@ class CreatecTransport(STMTransport):
         speed = max(1, int(speed))
         init_mv = self._getparam_f("Biasvolt.[mV]")
 
-        if init_mv * target_mv == 0 or init_mv == target_mv:
+        if init_mv == target_mv:
+            return
+
+        # Log ramp can't reach 0: ramp to ±1 mV on the non-zero side, step the rest.
+        if target_mv == 0:
+            if abs(init_mv) > 1:
+                self._ramp_same_pole(np.sign(init_mv), init_mv, speed)
+            self._setparam("Biasvolt.[mV]", 0)
+            return
+        if init_mv == 0:
+            self._setparam("Biasvolt.[mV]", np.sign(target_mv))
+            if abs(target_mv) > 1:
+                self._ramp_same_pole(target_mv, np.sign(target_mv), speed)
+            else:
+                self._setparam("Biasvolt.[mV]", target_mv)
             return
 
         if init_mv * target_mv > 0:
